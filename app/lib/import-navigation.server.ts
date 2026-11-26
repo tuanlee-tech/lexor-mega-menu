@@ -269,7 +269,7 @@ export async function importFromShopifyMenu(
         const parsedCol = parsePattern(colNode.title);
         const pos = parsedCol.attrs.pos || "";
         const desktopCols = Math.max(1, Math.min(6, Number(parsedCol.attrs.col) || 1));
-        const mobileCols = desktopCols > 2 ? 2 : 1;
+        const mobileCols = desktopCols >= 2 ? 2 : 1;
         const alignRaw = parsedCol.attrs.align || "center";
         const align =
           alignRaw === "left" || alignRaw === "right" ? alignRaw : "center";

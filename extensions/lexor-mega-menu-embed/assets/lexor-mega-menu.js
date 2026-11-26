@@ -402,11 +402,11 @@
 
                 var imgUrl = resolveImgUrl(it, meta.filesBaseUrl, 400);
                 var imgTag = imgUrl
-                  ? '<img src="' +
+                  ? '<div class="lmm-drawer-item__img"><img src="' +
                     escapeHtml(imgUrl) +
                     '" alt="' +
                     escapeHtml(it.title) +
-                    '" loading="lazy" />'
+                    '" width="128" height="128" /></div>'
                   : "";
                 var subBtn = it.btnText
                   ? '<a href="' +
