@@ -288,7 +288,21 @@
     panel.className = "lmm-drawer-panel";
     panel.setAttribute("role", "dialog");
     panel.setAttribute("aria-modal", "true");
+
+    var rootLayer = document.createElement("div");
+    rootLayer.className = "lmm-drawer-layer lmm-drawer-layer--root";
+
+    var subLayer = document.createElement("div");
+    subLayer.className = "lmm-drawer-layer lmm-drawer-layer--sub";
+
+    panel.appendChild(rootLayer);
+    panel.appendChild(subLayer);
     document.body.appendChild(panel);
+
+    var closeSvg =
+      '<svg width="16" height="16" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M1 1L17 17M17 1L1 17" stroke="#333333" stroke-width="1.6" stroke-linecap="round"/></svg>';
+    var backSvg =
+      '<svg width="9" height="16" viewBox="0 0 9 16" fill="none" aria-hidden="true"><path d="M8 1L1 8L8 15" stroke="#333333" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
     function renderRoot() {
       var listHtml = tabs
@@ -317,7 +331,7 @@
             "><span>" +
             escapeHtml(tab.title) +
             badgeHtml +
-            '</span><svg width="8" height="14" viewBox="0 0 9 16" fill="none"><path d="M1 1L8 8L1 15" stroke="#333" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></li>'
+            '</span><svg width="7" height="12" viewBox="0 0 9 16" fill="none"><path d="M1 1L8 8L1 15" stroke="#333" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></li>'
           );
         })
         .join("");
@@ -334,8 +348,6 @@
 
       var phoneSvg =
         '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.61 21 3 13.39 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.46.57 3.58a1 1 0 0 1-.25 1.01l-2.2 2.2Z"/></svg>';
-      var closeSvg =
-        '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M1 1L17 17M17 1L1 17" stroke="#333333" stroke-width="1.8" stroke-linecap="round"/></svg>';
 
       var phoneHtml =
         ms.showPhoneButton !== false && ms.phoneDisplay
@@ -350,7 +362,7 @@
             "</span></a>"
           : "";
 
-      panel.innerHTML =
+      rootLayer.innerHTML =
         '<div class="lmm-drawer-topbar lmm-drawer-topbar--root">' +
         '<button type="button" class="lmm-drawer-icon-btn" data-close-drawer aria-label="Close">' +
         closeSvg +
@@ -492,25 +504,40 @@
           .join("");
       }
 
-      panel.innerHTML =
+      subLayer.innerHTML =
         '<div class="lmm-drawer-topbar">' +
-        '<button type="button" class="lmm-drawer-icon-btn" data-back-root aria-label="Back"><svg width="9" height="16" viewBox="0 0 9 16" fill="none"><path d="M8 1L1 8L8 15" stroke="#333333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
-        '<button type="button" class="lmm-drawer-icon-btn" data-close-drawer aria-label="Close"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M1 1L17 17M17 1L1 17" stroke="#333333" stroke-width="1.8" stroke-linecap="round"/></svg></button>' +
+        '<button type="button" class="lmm-drawer-icon-btn" data-back-root aria-label="Back">' +
+        backSvg +
+        "</button>" +
+        '<button type="button" class="lmm-drawer-icon-btn" data-close-drawer aria-label="Close">' +
+        closeSvg +
+        "</button>" +
         "</div>" +
+        '<div class="lmm-drawer-sub-body">' +
         '<div class="lmm-drawer-title">' +
         escapeHtml(tab.title) +
         "</div>" +
-        bodyHtml;
+        bodyHtml +
+        "</div>";
+      subLayer.scrollTop = 0;
+      requestAnimationFrame(function () {
+        subLayer.classList.add("is-active");
+      });
     }
 
     function openDrawer() {
       renderRoot();
-      panel.classList.add("is-open");
+      subLayer.classList.remove("is-active");
+      rootLayer.scrollTop = 0;
+      requestAnimationFrame(function () {
+        panel.classList.add("is-open");
+      });
       document.documentElement.style.overflow = "hidden";
     }
 
     function closeDrawer() {
       panel.classList.remove("is-open");
+      subLayer.classList.remove("is-active");
       document.documentElement.style.overflow = "";
     }
 
@@ -520,7 +547,7 @@
       if (target.hasAttribute("data-close-drawer")) {
         closeDrawer();
       } else if (target.hasAttribute("data-back-root")) {
-        renderRoot();
+        subLayer.classList.remove("is-active");
       } else if (target.hasAttribute("data-open-tab")) {
         var id = target.getAttribute("data-open-tab");
         var found = tabs.find(function (t) {
