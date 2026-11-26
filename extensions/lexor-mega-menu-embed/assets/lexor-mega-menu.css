@@ -1,9 +1,10 @@
 /* ============================================================
    Lexor Mega Menu — Desktop & Mobile Drawer Storefront Styles
+   Pixel-matched to lexor.com production theme
    ============================================================ */
 
 :root {
-  --lmm-font-family: "Gotham", inherit;
+  --lmm-font-family: "Gotham", sans-serif;
   --lmm-dropdown-bg: #ffffff;
   --lmm-tab-hover-bg: #333333;
   --lmm-heading-color: #8c1b11;
@@ -49,8 +50,8 @@
   background: var(--lmm-dropdown-bg);
   color: var(--lmm-item-title-color);
   border-top: 1px solid #ececec;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
-  padding: 36px 24px 40px;
+  box-shadow: 0 4px 5px rgba(18, 18, 18, 0.05);
+  padding: 30px 0;
   z-index: 99;
   opacity: 0;
   visibility: hidden;
@@ -83,11 +84,15 @@
   display: flex;
   justify-content: center;
   align-items: stretch;
-  gap: 1.6rem;
+  gap: 2rem;
   list-style: none;
   margin: 0 auto;
-  padding: 0;
-  max-width: var(--page-width, 1400px);
+  padding: 0 50px;
+  max-width: var(--page-width, 1600px);
+}
+
+.lmm-parent-container--cols-3 {
+  gap: 1.6rem;
 }
 
 .lmm-parent-container > .lmm-col-item {
@@ -104,6 +109,7 @@
 }
 
 .lmm-col-heading {
+  font-family: var(--lmm-font-family);
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 1px;
@@ -114,21 +120,25 @@
 }
 
 .lmm-align-left,
-.lmm-align-left * {
+.lmm-align-left .lmm-col-heading,
+.lmm-align-left .lmm-card {
   text-align: left;
   align-items: flex-start;
+  justify-content: flex-start;
 }
 
 .lmm-align-right,
-.lmm-align-right * {
+.lmm-align-right .lmm-col-heading,
+.lmm-align-right .lmm-card {
   text-align: right;
   align-items: flex-end;
+  justify-content: flex-end;
 }
 
 .lmm-grid {
   display: grid;
   row-gap: 20px;
-  column-gap: 36px;
+  column-gap: 40px;
   align-items: start;
 }
 
@@ -138,14 +148,26 @@
   grid-auto-flow: column;
   grid-auto-rows: auto;
   grid-template-rows: repeat(3, auto);
+  justify-content: start;
 }
 
-.lmm-grid-cols-1 { grid-template-columns: 1fr; }
-.lmm-grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
-.lmm-grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.lmm-grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.lmm-grid-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-.lmm-grid-cols-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.lmm-grid--text-only .lmm-card {
+  align-items: flex-start;
+  text-align: left;
+  justify-content: flex-start;
+}
+
+.lmm-grid-cols-1 { grid-template-columns: 1fr; row-gap: 20px; }
+.lmm-grid-cols-2 { grid-template-columns: repeat(2, 1fr); row-gap: 20px; }
+.lmm-grid-cols-3 { grid-template-columns: repeat(3, auto); }
+.lmm-grid-cols-4 { grid-template-columns: repeat(4, auto); }
+.lmm-grid-cols-5 { grid-template-columns: repeat(5, auto); }
+.lmm-grid-cols-6 { grid-template-columns: repeat(6, auto); }
+
+/* Center odd last item in a 2-col desktop grid (e.g., ACCESSORIES under SPA JETS & PARTS) */
+.lmm-grid-cols-2:has(.lmm-card:not(.lmm-card--button):last-child:nth-child(odd)) .lmm-card:last-child {
+  grid-column: span 2;
+}
 
 .lmm-card {
   display: flex;
@@ -162,7 +184,7 @@
 
 .lmm-card--button {
   grid-column: 1 / -1;
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 .lmm-card__img-wrap {
@@ -171,25 +193,33 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  margin: 0 auto;
 }
 
-.lmm-card--page .lmm-card__img-wrap {
-  width: min(100%, 240px);
-  height: 140px;
+/* Page & 1-col/2-col images keep natural aspect ratio at 128px height (matches Promotions flyers & Special Features) */
+.lmm-card--page .lmm-card__img-wrap,
+.lmm-grid-cols-1 .lmm-card__img-wrap,
+.lmm-grid-cols-2 .lmm-card__img-wrap {
+  width: auto;
+  height: var(--lmm-img-size);
 }
 
 .lmm-card__img-wrap img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
+  width: var(--lmm-img-size);
+  height: var(--lmm-img-size);
+  object-fit: cover;
   border-radius: 4px;
+  display: block;
 }
 
-.lmm-card--page .lmm-card__img-wrap img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 6px;
+.lmm-card--page .lmm-card__img-wrap img,
+.lmm-grid-cols-1 .lmm-card__img-wrap img,
+.lmm-grid-cols-2 .lmm-card__img-wrap img {
+  width: auto;
+  height: var(--lmm-img-size);
+  max-width: 260px;
+  object-fit: contain;
+  border-radius: 4px;
 }
 
 .lmm-card__title {
@@ -199,8 +229,8 @@
   text-transform: uppercase;
   font-family: var(--lmm-font-family);
   color: var(--lmm-item-title-color);
-  line-height: 1.2;
-  margin-top: 14px;
+  line-height: 1;
+  margin-top: 16px;
   letter-spacing: 0.05em;
 }
 
@@ -212,9 +242,11 @@
   color: var(--lmm-item-link-color);
   letter-spacing: 0.05em;
   line-height: 1.85;
+  white-space: nowrap;
 }
 
 .lmm-card__btn-link {
+  font-family: var(--lmm-font-family);
   font-size: 10px;
   color: var(--lmm-item-link-color) !important;
   margin-top: 8px;
@@ -226,9 +258,10 @@
 
 .lmm-btn-viewall {
   display: inline-block;
+  font-family: var(--lmm-font-family);
   background: linear-gradient(180deg, #8c1b11 0%, #6d0f07 100%);
   color: #ffffff !important;
-  padding: 10px 18px;
+  padding: 10px 14px;
   text-transform: uppercase;
   line-height: 1em;
   border-radius: 4px;
@@ -250,11 +283,12 @@
 .lmm-dropdown-list a {
   text-decoration: none;
   color: #333333;
+  font-family: var(--lmm-font-family);
   font-size: 13px;
 }
 
 /* ============================================================
-   Mobile Drawer Styles (matches Lexor header-drawer & drawer-grid-column)
+   Mobile Drawer Styles (pixel-matched to Lexor header-drawer)
    ============================================================ */
 .lmm-drawer-panel {
   position: fixed;
@@ -262,9 +296,10 @@
   background: #ffffff;
   z-index: 9999;
   overflow-y: auto;
-  padding: 20px 24px 80px;
+  padding: 28px 40px 100px;
   display: none;
   flex-direction: column;
+  font-family: var(--lmm-font-family);
 }
 
 .lmm-drawer-panel.is-open {
@@ -275,7 +310,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
 .lmm-drawer-topbar--root {
@@ -299,7 +334,7 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 32px;
 }
 
 .lmm-drawer-root-item {
@@ -309,12 +344,13 @@
   width: 100%;
   background: transparent;
   border: 0;
-  padding: 4px 0;
+  padding: 2px 0;
+  font-family: var(--lmm-font-family);
   font-size: 14px;
   font-weight: 500;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.7px;
   text-transform: uppercase;
-  color: #222222;
+  color: #333333;
   text-decoration: none;
   cursor: pointer;
   text-align: left;
@@ -324,20 +360,21 @@
   height: 1px;
   width: 100%;
   background: #e5e5e5;
-  margin: 28px 0;
+  margin: 32px 0 28px;
 }
 
 .lmm-drawer-account {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  font-family: var(--lmm-font-family);
   font-size: 14px;
   font-weight: 500;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.7px;
   text-transform: uppercase;
-  color: #222222;
+  color: #333333;
   text-decoration: none;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .lmm-drawer-phone-btn {
@@ -346,16 +383,18 @@
   gap: 10px;
   background: #8c1b11;
   color: #ffffff !important;
-  padding: 11px 20px;
-  border-radius: 2px;
+  padding: 12px 20px;
+  border-radius: 3px;
+  font-family: var(--lmm-font-family);
   font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.04em;
+  font-weight: 400;
+  letter-spacing: 0.6px;
   text-decoration: none !important;
   width: fit-content;
 }
 
 .lmm-drawer-title {
+  font-family: var(--lmm-font-family);
   font-weight: 500;
   font-size: 13px;
   line-height: 1em;
@@ -370,8 +409,8 @@
   display: grid;
   justify-content: center;
   align-items: end;
-  row-gap: 36px;
-  column-gap: 18px;
+  row-gap: 40px;
+  column-gap: 20px;
 }
 
 .lmm-drawer-grid--cols-1 { grid-template-columns: 1fr; }
@@ -396,16 +435,16 @@
 .lmm-drawer-item img {
   object-fit: contain;
   border-radius: 4px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
   max-width: 100%;
   max-height: 128px;
 }
 
 .lmm-drawer-item__title {
-  font-family: "Gotham", inherit;
+  font-family: var(--lmm-font-family);
   font-weight: 500;
-  font-size: 14px;
-  line-height: 1.2;
+  font-size: 15px;
+  line-height: 1.1;
   letter-spacing: 0.75px;
   text-align: center;
   text-transform: uppercase;
@@ -414,6 +453,7 @@
 }
 
 .lmm-drawer-item__btn {
+  font-family: var(--lmm-font-family);
   font-size: 12px;
   line-height: 1;
   letter-spacing: 1px;
@@ -426,7 +466,7 @@
   height: 1px;
   width: 90%;
   background: #e5e5e5;
-  margin: 36px auto;
+  margin: 40px auto;
 }
 
 @media screen and (max-width: 320px) {

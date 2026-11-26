@@ -140,10 +140,10 @@ async function resolveFileUrls(
 /**
  * Resolve default product/collection images when no custom `image:` was specified.
  */
-async function resolveResourceImages(
+async function resolveResourceMeta(
   admin: AdminGraphql,
   resourceIds: string[]
-): Promise<Record<string, string>> {
+): Promise<Record<string, { title?: string; imageUrl?: string }>> {
   const validIds = Array.from(
     new Set(
       resourceIds.filter(
@@ -153,20 +153,22 @@ async function resolveResourceImages(
       )
     )
   );
-  const map: Record<string, string> = {};
+  const map: Record<string, { title?: string; imageUrl?: string }> = {};
   if (validIds.length === 0) return map;
 
   try {
     const res = await admin.graphql(
       `
-      query ResolveResourceImages($ids: [ID!]!) {
+      query ResolveResourceMeta($ids: [ID!]!) {
         nodes(ids: $ids) {
           ... on Product {
             id
+            title
             featuredImage { url }
           }
           ... on Collection {
             id
+            title
             image { url }
           }
         }
@@ -178,8 +180,10 @@ async function resolveResourceImages(
     const nodes = json?.data?.nodes || [];
     for (const node of nodes) {
       if (!node?.id) continue;
-      const url = node?.featuredImage?.url || node?.image?.url;
-      if (url) map[node.id] = url;
+      map[node.id] = {
+        title: node.title || undefined,
+        imageUrl: node?.featuredImage?.url || node?.image?.url || undefined,
+      };
     }
   } catch {
     // Non-fatal
@@ -243,16 +247,17 @@ export async function importFromShopifyMenu(
         const parsed = parsePattern(leaf.title);
         if (parsed.isPattern && parsed.attrs.image) {
           filenamesToResolve.push(parsed.attrs.image);
-        } else if (leaf.resourceId) {
+        }
+        if (leaf.resourceId) {
           resourceIdsToResolve.push(leaf.resourceId);
         }
       }
     }
   }
 
-  const [fileUrlMap, resourceImageMap] = await Promise.all([
+  const [fileUrlMap, resourceMetaMap] = await Promise.all([
     resolveFileUrls(admin, filenamesToResolve),
-    resolveResourceImages(admin, resourceIdsToResolve),
+    resolveResourceMeta(admin, resourceIdsToResolve),
   ]);
 
   const topLevelItems: TopLevelItem[] = rawItems.map((top) => {
@@ -287,21 +292,32 @@ export async function importFromShopifyMenu(
               : "text_link";
 
             const imgFile = parsedLeaf.attrs.image || "";
+            const resMeta = leaf.resourceId ? resourceMetaMap[leaf.resourceId] : undefined;
             const resolvedImg =
               (imgFile && fileUrlMap[imgFile]) ||
-              (leaf.resourceId && resourceImageMap[leaf.resourceId]) ||
+              resMeta?.imageUrl ||
               undefined;
+            const fallbackHandleTitle = (leaf.url || "")
+              .split("/")
+              .filter(Boolean)
+              .pop()
+              ?.replace(/-/g, " ");
 
             return {
               id: uid("item"),
               type: itemType,
-              title: parsedLeaf.attrs.title || parsedLeaf.attrs.btn || leaf.title,
+              title:
+                parsedLeaf.attrs.title ||
+                (itemType === "button" ? parsedLeaf.attrs.btn : undefined) ||
+                resMeta?.title ||
+                fallbackHandleTitle ||
+                leaf.title,
               url: leaf.url || "#",
               resourceId: leaf.resourceId || undefined,
               imageUrl: resolvedImg,
               imageFilename: imgFile || undefined,
               btnText: parsedLeaf.attrs.btn || "",
-              buttonBgColor: itemType === "button" ? "#8C1B11" : undefined,
+              buttonBgColor: undefined,
               visibility: "all",
               schedule: { enabled: false },
               badge: null,

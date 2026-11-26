@@ -6,7 +6,6 @@ embedded = true
 client_id = "568f4388307e8ddc5d7f14306103a94a"
 
 [build]
-include_config_on_deploy = true
 automatically_update_urls_on_dev = true
 
 [webhooks]

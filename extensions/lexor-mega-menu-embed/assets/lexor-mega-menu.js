@@ -110,7 +110,10 @@
               var cardsHtml = visibleItems
                 .map(function (it) {
                   if (it.type === "button") {
-                    var btnStyle = it.buttonBgColor
+                    var isCustomColor =
+                      it.buttonBgColor &&
+                      it.buttonBgColor.toLowerCase() !== "#8c1b11";
+                    var btnStyle = isCustomColor
                       ? ' style="background:' + escapeHtml(it.buttonBgColor) + '"'
                       : "";
                     return (
@@ -181,13 +184,18 @@
               var divider =
                 cIdx < cols.length - 1 ? '<li class="lmm-layout-divider' + (inherit ? " layout-divider" : "") + '"></li>' : "";
 
+              var flexStyle =
+                cols.length >= 3
+                  ? ' style="flex:' + (col.flexRatio || 1) + ' 1 0"'
+                  : ' style="flex:0 1 auto"';
+
               return (
                 '<li class="lmm-col-item' +
                 (inherit ? " mega-menu__item" : "") +
                 alignClass +
-                '" style="flex:' +
-                (col.flexRatio || 1) +
-                ' 1 0">' +
+                '"' +
+                flexStyle +
+                ">" +
                 headingHtml +
                 '<div class="' +
                 gridClass +
@@ -199,7 +207,13 @@
             })
             .join("");
 
-          contentHtml = '<ul class="lmm-parent-container' + (inherit ? " mega-menu__list page-width collection-parent__container" : "") + '" role="list">' + colsHtml + "</ul>";
+          contentHtml =
+            '<ul class="lmm-parent-container lmm-parent-container--cols-' +
+            cols.length +
+            (inherit ? " mega-menu__list page-width collection-parent__container" : "") +
+            '" role="list">' +
+            colsHtml +
+            "</ul>";
         } else {
           var ddHtml = (tab.dropdownLinks || [])
             .map(function (dd) {
@@ -304,20 +318,29 @@
             "</span></a>"
           : "";
 
+      var phoneSvg =
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.61 21 3 13.39 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.46.57 3.58a1 1 0 0 1-.25 1.01l-2.2 2.2Z"/></svg>';
+      var closeSvg =
+        '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M1 1L17 17M17 1L1 17" stroke="#333333" stroke-width="1.8" stroke-linecap="round"/></svg>';
+
       var phoneHtml =
         ms.showPhoneButton !== false && ms.phoneDisplay
           ? '<a class="lmm-drawer-phone-btn" href="' +
             escapeHtml(ms.phoneHref || "tel:" + ms.phoneDisplay.replace(/\D/g, "")) +
             '" style="background:' +
             escapeHtml(ms.phoneBgColor || "#8C1B11") +
-            '"><span>&#9742;</span><span>' +
+            '">' +
+            phoneSvg +
+            "<span>" +
             escapeHtml(ms.phoneDisplay) +
             "</span></a>"
           : "";
 
       panel.innerHTML =
         '<div class="lmm-drawer-topbar lmm-drawer-topbar--root">' +
-        '<button type="button" class="lmm-drawer-icon-btn" data-close-drawer aria-label="Close">&#10005;</button>' +
+        '<button type="button" class="lmm-drawer-icon-btn" data-close-drawer aria-label="Close">' +
+        closeSvg +
+        "</button>" +
         "</div>" +
         '<ul class="lmm-drawer-root-list">' +
         listHtml +
@@ -458,7 +481,7 @@
       panel.innerHTML =
         '<div class="lmm-drawer-topbar">' +
         '<button type="button" class="lmm-drawer-icon-btn" data-back-root aria-label="Back"><svg width="9" height="16" viewBox="0 0 9 16" fill="none"><path d="M8 1L1 8L8 15" stroke="#333333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
-        '<button type="button" class="lmm-drawer-icon-btn" data-close-drawer aria-label="Close">&#10005;</button>' +
+        '<button type="button" class="lmm-drawer-icon-btn" data-close-drawer aria-label="Close"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M1 1L17 17M17 1L1 17" stroke="#333333" stroke-width="1.8" stroke-linecap="round"/></svg></button>' +
         "</div>" +
         '<div class="lmm-drawer-title">' +
         escapeHtml(tab.title) +
