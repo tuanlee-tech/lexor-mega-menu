@@ -1,5 +1,5 @@
 /* ============================================================
-   Lexor Mega Menu — Desktop & Mobile Drawer Storefront Styles
+   Lexor Mega Menu — Desktop & Native Header-Drawer Fallback Styles
    Pixel-matched to lexor.com production theme
    ============================================================ */
 
@@ -164,7 +164,6 @@
 .lmm-grid-cols-5 { grid-template-columns: repeat(5, auto); }
 .lmm-grid-cols-6 { grid-template-columns: repeat(6, auto); }
 
-/* Center odd last item in a 2-col desktop grid (e.g., ACCESSORIES under SPA JETS & PARTS) */
 .lmm-grid-cols-2:has(.lmm-card:not(.lmm-card--button):last-child:nth-child(odd)) .lmm-card:last-child {
   grid-column: span 2;
 }
@@ -196,7 +195,6 @@
   margin: 0 auto;
 }
 
-/* Page & 1-col/2-col images keep natural aspect ratio at 128px height (matches Promotions flyers & Special Features) */
 .lmm-card--page .lmm-card__img-wrap,
 .lmm-grid-cols-1 .lmm-card__img-wrap,
 .lmm-grid-cols-2 .lmm-card__img-wrap {
@@ -256,18 +254,18 @@
   font-weight: 400;
 }
 
-.lmm-btn-viewall {
+.lmm-btn-viewall,
+.btn-viewall {
   display: inline-block;
   font-family: var(--lmm-font-family);
   background: linear-gradient(180deg, #8c1b11 0%, #6d0f07 100%);
-  color: #ffffff !important;
+  color: #ffffff;
   padding: 10px 14px;
   text-transform: uppercase;
   line-height: 1em;
   border-radius: 4px;
   font-size: 12px;
-  letter-spacing: 0.05em;
-  text-decoration: none !important;
+  text-decoration: none;
 }
 
 .lmm-dropdown-list {
@@ -288,177 +286,23 @@
 }
 
 /* ============================================================
-   Mobile Drawer Styles (pixel-matched to lexor.com DOM & CSS)
+   Native <header-drawer> Grid Styles (exact rules from
+   header-drawer.liquid & drawer-grid-column.liquid)
    ============================================================ */
-.lmm-drawer-panel {
-  position: fixed;
-  inset: 0;
-  background: #ffffff;
-  z-index: 9999;
-  overflow: hidden;
-  font-family: var(--lmm-font-family);
-  transform: translateX(-100%);
-  visibility: hidden;
-  pointer-events: none;
-  transition: transform 0.2s ease, visibility 0.2s ease;
-}
-
-.lmm-drawer-panel.is-open {
-  transform: translateX(0);
-  visibility: visible;
-  pointer-events: auto;
-}
-
-.lmm-drawer-layer {
-  position: absolute;
-  inset: 0;
-  background: #ffffff;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  display: flex;
-  flex-direction: column;
-  isolation: isolate;
-}
-
-.lmm-drawer-layer--root {
-  z-index: 1;
-  padding-bottom: 80px;
-}
-
-.lmm-drawer-layer--sub {
-  z-index: 2;
-  padding: 0 40px 120px;
-  transform: translateX(100%);
-  visibility: hidden;
-  pointer-events: none;
-  transition: transform 0.2s ease, visibility 0.2s ease;
-}
-
-.lmm-drawer-layer--sub.is-active {
-  transform: translateX(0);
-  visibility: visible;
-  pointer-events: auto;
-}
-
-.lmm-drawer-topbar {
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  background: #ffffff;
+.menu-drawer-buttons {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 32px 0 10px;
-  margin: 0;
-  flex-shrink: 0;
 }
 
-.lmm-drawer-topbar--root {
-  position: static;
-  justify-content: flex-end;
-  padding: 30px 48px 0;
-  margin-bottom: 36px;
-}
-
-.lmm-drawer-icon-btn {
+.menu-drawer-buttons button {
   background: transparent;
   border: 0;
   cursor: pointer;
-  padding: 4px;
-  color: #333333;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  transition: background 0.15s ease;
 }
 
-.lmm-drawer-icon-btn:hover,
-.lmm-drawer-icon-btn:active {
-  background: #f3f3f3;
-}
-
-.lmm-drawer-root-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.lmm-drawer-root-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  background: transparent;
-  border: 0;
-  padding: 15px 40px;
-  font-family: var(--lmm-font-family);
-  font-size: 15px;
-  font-weight: 500;
-  letter-spacing: 0.45px;
-  line-height: 18px;
-  text-transform: uppercase;
-  color: #333333;
-  text-decoration: none;
-  cursor: pointer;
-  text-align: left;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.lmm-drawer-root-item:hover,
-.lmm-drawer-root-item:active {
-  background: #f5f5f5;
-}
-
-.lmm-drawer-sep {
-  height: 1px;
-  width: calc(100% - 60px);
-  background: #e5e5e5;
-  margin: 20px 30px;
-  flex-shrink: 0;
-}
-
-.lmm-drawer-account {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  font-family: var(--lmm-font-family);
-  font-size: 15px;
-  font-weight: 500;
-  letter-spacing: 0.45px;
-  text-transform: uppercase;
-  color: #333333;
-  text-decoration: none;
-  margin: 0 30px 24px;
-  width: fit-content;
-}
-
-.lmm-drawer-phone-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: #8c1b11;
-  color: #ffffff !important;
-  padding: 8px 12px;
-  border-radius: 2px;
-  font-family: var(--lmm-font-family);
-  font-size: 14px;
-  font-weight: 400;
-  letter-spacing: 0.45px;
-  text-decoration: none !important;
-  margin: 0 30px;
-  width: fit-content;
-}
-
-.lmm-drawer-sub-body {
-  padding: 0;
-}
-
-.lmm-drawer-title {
-  font-family: var(--lmm-font-family);
+.title-menu,
+.drawer-heading-menu {
   font-weight: 500;
   font-size: 13px;
   line-height: 1em;
@@ -467,87 +311,113 @@
   text-transform: uppercase;
   color: #8c1b11;
   padding: 24px 0 20px;
-  margin: 0;
 }
 
-.lmm-drawer-grid {
+.menu-drawer__inner-submenu:has(.drawer-heading-menu) .title-menu {
+  display: none;
+}
+
+.drawer-collection-parent {
+  padding-bottom: 120px;
+}
+
+.drawer-column {
+  padding-bottom: 40px;
+}
+
+.drawer-column:last-child {
+  padding-bottom: 0;
+}
+
+.drawer-collection-grid {
   display: grid;
   justify-content: center;
   align-items: end;
-  row-gap: 20px;
-  column-gap: 0;
+  row-gap: 40px;
 }
 
-.lmm-drawer-grid--cols-1 { grid-template-columns: 1fr; }
-.lmm-drawer-grid--cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.lmm-drawer-grid--cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid-cols-1 {
+  grid-template-columns: 1fr;
+  row-gap: 20px;
+}
 
-.lmm-drawer-item {
+.drawer_grid-cols-1 {
+  row-gap: 40px;
+}
+
+.grid-cols-2 {
+  grid-template-columns: repeat(2, 1fr);
+  row-gap: 20px;
+}
+
+.grid-cols-3 {
+  grid-template-columns: repeat(3, auto);
+  align-items: start;
+}
+
+.drawer-grid__item {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   align-items: center;
+}
+
+.drawer-item-link {
+  text-decoration: none;
   text-align: center;
 }
 
-.lmm-drawer-item--span-2 {
-  grid-column: span 2;
-}
-
-.lmm-drawer-item--full {
-  grid-column: 1 / -1;
-}
-
-.lmm-drawer-item__img {
-  width: 100%;
-  height: 128px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 16px;
-}
-
-.lmm-drawer-item__img img,
-.lmm-drawer-item img {
-  object-fit: contain;
-  border-radius: 4px;
-  max-width: 100%;
-  max-height: 128px;
-  width: auto;
-  height: 128px;
-  display: block;
-}
-
-.lmm-drawer-item__title {
-  font-family: var(--lmm-font-family);
+.drawer-item-link .item-title {
+  font-family: "Gotham", inherit;
   font-weight: 500;
   font-size: 15px;
-  line-height: 1.1;
+  line-height: 100%;
   letter-spacing: 0.75px;
   text-align: center;
   text-transform: uppercase;
   color: #333333;
-  text-decoration: none;
 }
 
-.lmm-drawer-item__btn {
-  font-family: var(--lmm-font-family);
+.drawer-grid__btn {
   font-size: 12px;
-  line-height: 1;
+  line-height: 100%;
   letter-spacing: 1px;
-  color: #4b4b4b !important;
-  text-decoration: underline #4b4b4b !important;
+  text-align: center;
+  color: #4b4b4b;
+  text-decoration: underline;
+  text-decoration-color: #4b4b4b;
   margin-top: 8px;
 }
 
-.lmm-drawer-divider {
+.drawer-collection-parent .img-container img {
+  object-fit: contain;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  width: 100%;
+  height: 100%;
+}
+
+.drawer_grid-cols-2 .img-container img {
+  max-height: 128px;
+}
+
+.drawer_grid-cols-1 .img-container img {
+  max-height: 140px;
+}
+
+.drawer-divider {
   height: 1px;
   width: 90%;
   background: #e5e5e5;
   margin: 40px auto;
 }
 
+.drawer-collection-grid:has(.drawer-grid__item:last-child:nth-child(odd)) .drawer-grid__item:last-child {
+  grid-column: span 2;
+}
+
 @media screen and (max-width: 320px) {
-  .lmm-drawer-grid {
+  .drawer-collection-grid {
     grid-template-columns: 1fr;
   }
 }

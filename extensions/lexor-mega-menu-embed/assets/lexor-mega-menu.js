@@ -22,6 +22,15 @@
       .replace(/'/g, "&#39;");
   }
 
+  function toHandle(str) {
+    return String(str || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  }
+
   function renderBadgeHtml(badge) {
     if (!badge || !badge.text) return "";
     return (
@@ -57,15 +66,6 @@
       }
     }
     return config.defaultMenu || null;
-  }
-
-  function toHandle(str) {
-    return String(str || "")
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
   }
 
   function buildDesktopHtml(menu, filesBaseUrl) {
@@ -186,15 +186,28 @@
 
               var headingHtml =
                 col.showHeading && col.heading
-                  ? '<h3 class="lmm-col-heading' + (inherit ? " mega-menu-heading" : "") + '">' + escapeHtml(col.heading) + "</h3>"
+                  ? '<h3 class="lmm-col-heading' +
+                    (inherit ? " mega-menu-heading" : "") +
+                    '">' +
+                    escapeHtml(col.heading) +
+                    "</h3>"
                   : "";
 
               var gridClass = isTextOnly
                 ? "lmm-grid lmm-grid--text-only" + (inherit ? " collection-grid" : "")
-                : "lmm-grid lmm-grid-cols-" + Math.max(1, Math.min(6, col.desktopCols || 1)) + (inherit ? " collection-grid grid-cols-" + Math.max(1, Math.min(6, col.desktopCols || 1)) : "");
+                : "lmm-grid lmm-grid-cols-" +
+                  Math.max(1, Math.min(6, col.desktopCols || 1)) +
+                  (inherit
+                    ? " collection-grid grid-cols-" +
+                      Math.max(1, Math.min(6, col.desktopCols || 1))
+                    : "");
 
               var divider =
-                cIdx < cols.length - 1 ? '<li class="lmm-layout-divider' + (inherit ? " layout-divider" : "") + '"></li>' : "";
+                cIdx < cols.length - 1
+                  ? '<li class="lmm-layout-divider' +
+                    (inherit ? " layout-divider" : "") +
+                    '"></li>'
+                  : "";
 
               var flexStyle =
                 cols.length >= 3
@@ -279,298 +292,269 @@
     );
   }
 
-  function mountMobileDrawer(drawerEl, menu, meta) {
+  /**
+   * Hydrate the theme's native <header-drawer> directly using the exact
+   * DOM classes, SVGs, and <details> structure of header-drawer.liquid & drawer-grid-column.liquid.
+   * This preserves 100% of Dawn's native animations, icons, sticky buttons, and CSS!
+   */
+  function hydrateNativeMobileDrawer(drawerEl, menu, meta) {
+    var ul = drawerEl.querySelector("ul.menu-drawer__menu");
+    if (!ul) return;
+
+    // Exact SVGs from lexor.com's header-drawer.liquid (reused from DOM if present, with byte-exact fallbacks)
+    var existingCloseSvg =
+      (drawerEl.querySelector(".replace-close-btn") &&
+        drawerEl.querySelector(".replace-close-btn").innerHTML.trim()) ||
+      '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M6.575 7.975L1.675 12.875C1.49167 13.0583 1.25833 13.15 0.975 13.15C0.691667 13.15 0.458333 13.0583 0.275 12.875C0.0916663 12.6917 0 12.4583 0 12.175C0 11.8917 0.0916663 11.6583 0.275 11.475L5.175 6.575L0.275 1.675C0.0916663 1.49167 0 1.25833 0 0.975C0 0.691667 0.0916663 0.458333 0.275 0.275C0.458333 0.0916663 0.691667 0 0.975 0C1.25833 0 1.49167 0.0916663 1.675 0.275L6.575 5.175L11.475 0.275C11.6583 0.0916663 11.8917 0 12.175 0C12.4583 0 12.6917 0.0916663 12.875 0.275C13.0583 0.458333 13.15 0.691667 13.15 0.975C13.15 1.25833 13.0583 1.49167 12.875 1.675L7.975 6.575L12.875 11.475C13.0583 11.6583 13.15 11.8917 13.15 12.175C13.15 12.4583 13.0583 12.6917 12.875 12.875C12.6917 13.0583 12.4583 13.15 12.175 13.15C11.8917 13.15 11.6583 13.0583 11.475 12.875L6.575 7.975Z" fill="#333333"/></svg>';
+
+    var rightArrowSvg =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="7" height="12" viewBox="0 0 7 12" fill="none"><path d="M0.75 10.75L5.75 5.75L0.75 0.75" stroke="#333333" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+    var caretSvg =
+      '<svg aria-hidden="true" focusable="false" class="icon icon-caret" viewBox="0 0 10 6"><path fill-rule="evenodd" clip-rule="evenodd" d="M9.354.646a.5.5 0 00-.708 0L5 4.293 1.354.646a.5.5 0 00-.708.708l4 4a.5.5 0 00.708 0l4-4a.5.5 0 000-.708z" fill="currentColor"/></svg>';
+
+    var backSvg =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="9" height="16" viewBox="0 0 9 16" fill="none"><path d="M8 1L1 8L8 15" stroke="#333333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
     var tabs = (menu.items || []).filter(function (t) {
       return t.visibility !== "desktop" && isScheduleActive(t.schedule);
     });
 
-    var panel = document.createElement("div");
-    panel.className = "lmm-drawer-panel";
-    panel.setAttribute("role", "dialog");
-    panel.setAttribute("aria-modal", "true");
+    var listHtml = tabs
+      .map(function (tab, idx) {
+        var handle = toHandle(tab.title);
+        var colorStyle = tab.highlightColor
+          ? ' style="color:' + escapeHtml(tab.highlightColor) + '"'
+          : "";
+        var badgeHtml = renderBadgeHtml(tab.badge);
 
-    var rootLayer = document.createElement("div");
-    rootLayer.className = "lmm-drawer-layer lmm-drawer-layer--root";
-
-    var subLayer = document.createElement("div");
-    subLayer.className = "lmm-drawer-layer lmm-drawer-layer--sub";
-
-    panel.appendChild(rootLayer);
-    panel.appendChild(subLayer);
-    document.body.appendChild(panel);
-
-    var closeSvg =
-      '<svg width="16" height="16" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M1 1L17 17M17 1L1 17" stroke="#333333" stroke-width="1.6" stroke-linecap="round"/></svg>';
-    var backSvg =
-      '<svg width="9" height="16" viewBox="0 0 9 16" fill="none" aria-hidden="true"><path d="M8 1L1 8L8 15" stroke="#333333" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-
-    function renderRoot() {
-      var listHtml = tabs
-        .map(function (tab) {
-          var colorStyle = tab.highlightColor
-            ? ' style="color:' + escapeHtml(tab.highlightColor) + '"'
-            : "";
-          var badgeHtml = renderBadgeHtml(tab.badge);
-          if (tab.type === "simple_link") {
-            return (
-              '<li><a href="' +
-              escapeHtml(tab.url || "/") +
-              '" class="lmm-drawer-root-item"' +
-              colorStyle +
-              "><span>" +
-              escapeHtml(tab.title) +
-              badgeHtml +
-              "</span></a></li>"
-            );
-          }
+        if (tab.type === "simple_link") {
           return (
-            '<li><button type="button" class="lmm-drawer-root-item" data-open-tab="' +
-            escapeHtml(tab.id) +
-            '"' +
+            '<li><a id="HeaderDrawer-' +
+            escapeHtml(handle) +
+            '" href="' +
+            escapeHtml(tab.url || "/") +
+            '" class="menu-drawer__menu-item list-menu__item link link--text focus-inset"' +
             colorStyle +
-            "><span>" +
+            ">" +
             escapeHtml(tab.title) +
             badgeHtml +
-            '</span><svg width="7" height="12" viewBox="0 0 9 16" fill="none"><path d="M1 1L8 8L1 15" stroke="#333" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></li>'
+            "</a></li>"
           );
-        })
-        .join("");
+        }
 
-      var ms = menu.mobileSettings || {};
-      var accountHtml =
-        ms.showAccountLink !== false && meta.customerAccountsEnabled
-          ? '<a class="lmm-drawer-account" href="' +
-            escapeHtml(meta.accountUrl) +
-            '"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8Zm0 9c2.67 0 8 1.33 8 4v3H4v-3c0-2.67 5.33-4 8-4Z" stroke="currentColor" stroke-width="1.6"/></svg><span>' +
-            (meta.customerLoggedIn ? "Account" : "Log in") +
-            "</span></a>"
-          : "";
+        var innerContentHtml = "";
+        if (tab.type === "mega_menu") {
+          var cols = (tab.columns || []).filter(function (c) {
+            return c.visibility !== "desktop";
+          });
+          var colsHtml = cols
+            .map(function (col, cIdx) {
+              var items = (col.items || []).filter(function (it) {
+                return it.visibility !== "desktop" && isScheduleActive(it.schedule);
+              });
+              // Match drawer-grid-column.liquid exact column logic:
+              // >2 desktop cols => grid-cols-2; <=2 desktop cols => grid-cols-1 (where odd last item span-2 creates implicit 2-col for 3 items!)
+              var dCols = col.desktopCols || 1;
+              var mCols =
+                col.mobileCols && col.mobileCols !== 1
+                  ? Math.min(3, col.mobileCols)
+                  : dCols > 2
+                    ? 2
+                    : 1;
+              var imgW = mCols === 1 ? 640 : 540;
+              var align = col.align || "center";
+              var posClass = cIdx === 0 ? "left" : "right";
 
-      var phoneSvg =
-        '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.61 21 3 13.39 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.46.57 3.58a1 1 0 0 1-.25 1.01l-2.2 2.2Z"/></svg>';
+              var headingHtml =
+                col.showHeading && col.heading
+                  ? '<h3 class="drawer-heading-menu">' + escapeHtml(col.heading) + "</h3>"
+                  : "";
 
-      var phoneHtml =
-        ms.showPhoneButton !== false && ms.phoneDisplay
-          ? '<a class="lmm-drawer-phone-btn" href="' +
-            escapeHtml(ms.phoneHref || "tel:" + ms.phoneDisplay.replace(/\D/g, "")) +
-            '" style="background:' +
-            escapeHtml(ms.phoneBgColor || "#8C1B11") +
-            '">' +
-            phoneSvg +
-            "<span>" +
-            escapeHtml(ms.phoneDisplay) +
-            "</span></a>"
-          : "";
+              var itemsHtml = items
+                .map(function (it) {
+                  if (it.type === "button") {
+                    var isCustomColor =
+                      it.buttonBgColor &&
+                      it.buttonBgColor.toLowerCase() !== "#8c1b11";
+                    var btnStyle = isCustomColor
+                      ? ' style="background:' + escapeHtml(it.buttonBgColor) + '"'
+                      : "";
+                    return (
+                      '<div class="drawer-grid__item"><a href="' +
+                      escapeHtml(it.url || "#") +
+                      '" class="btn btn-viewall drawer-btn-viewall"' +
+                      btnStyle +
+                      "><span>" +
+                      escapeHtml(it.btnText || it.title || "Shop Now") +
+                      "</span></a></div>"
+                    );
+                  }
 
-      rootLayer.innerHTML =
-        '<div class="lmm-drawer-topbar lmm-drawer-topbar--root">' +
-        '<button type="button" class="lmm-drawer-icon-btn" data-close-drawer aria-label="Close">' +
-        closeSvg +
-        "</button>" +
-        "</div>" +
-        '<ul class="lmm-drawer-root-list">' +
-        listHtml +
-        "</ul>" +
-        '<div class="lmm-drawer-sep"></div>' +
-        accountHtml +
-        phoneHtml;
-    }
+                  if (it.type === "text_link") {
+                    return (
+                      '<div class="drawer-grid__item"><a href="' +
+                      escapeHtml(it.url || "#") +
+                      '" class="drawer-item-link"><span class="item-title">' +
+                      escapeHtml(it.title) +
+                      renderBadgeHtml(it.badge) +
+                      "</span></a></div>"
+                    );
+                  }
 
-    function renderSubmenu(tab) {
-      var bodyHtml = "";
-      if (tab.type === "mega_menu") {
-        var cols = (tab.columns || []).filter(function (c) {
-          return c.visibility !== "desktop";
-        });
-        bodyHtml = cols
-          .map(function (col, cIdx) {
-            var items = (col.items || []).filter(function (it) {
-              return it.visibility !== "desktop" && isScheduleActive(it.schedule);
-            });
-            var nonButtons = items.filter(function (x) {
-              return x.type !== "button";
-            });
-            var mCols = Math.max(1, Math.min(3, col.mobileCols || 2));
-            var itemsHtml = items
-              .map(function (it) {
-                if (it.type === "button") {
-                  var btnStyle = it.buttonBgColor
-                    ? ' style="background:' + escapeHtml(it.buttonBgColor) + '"'
+                  var imgUrl = resolveImgUrl(it, meta.filesBaseUrl, imgW);
+                  var imgTag = imgUrl
+                    ? '<img src="' +
+                      escapeHtml(imgUrl) +
+                      '" alt="' +
+                      escapeHtml(it.title) +
+                      '" width="' +
+                      imgW +
+                      '" height="540" loading="lazy">'
                     : "";
-                  return (
-                    '<div class="lmm-drawer-item lmm-drawer-item--full"><a href="' +
-                    escapeHtml(it.url || "#") +
-                    '" class="lmm-btn-viewall"' +
-                    btnStyle +
-                    "><span>" +
-                    escapeHtml(it.btnText || it.title || "Shop All") +
-                    "</span></a></div>"
-                  );
-                }
-                var isOddLast =
-                  mCols === 2 &&
-                  nonButtons.length % 2 === 1 &&
-                  nonButtons[nonButtons.length - 1] === it;
-                var spanClass = isOddLast ? " lmm-drawer-item--span-2" : "";
+                  var subBtn = it.btnText
+                    ? '<a href="' +
+                      escapeHtml(it.url || "#") +
+                      '" class="drawer-grid__btn">' +
+                      escapeHtml(it.btnText) +
+                      "</a>"
+                    : "";
 
-                if (it.type === "text_link") {
                   return (
-                    '<div class="lmm-drawer-item' +
-                    spanClass +
-                    '"><a href="' +
+                    '<div class="drawer-grid__item"><a href="' +
                     escapeHtml(it.url || "#") +
-                    '" class="lmm-drawer-item__title">' +
+                    '" class="drawer-item-link"><div class="img-container">' +
+                    imgTag +
+                    '</div><span class="item-title">' +
                     escapeHtml(it.title) +
                     renderBadgeHtml(it.badge) +
-                    "</a></div>"
+                    "</span></a>" +
+                    subBtn +
+                    "</div>"
                   );
-                }
+                })
+                .join("");
 
-                var imgUrl = resolveImgUrl(it, meta.filesBaseUrl, 400);
-                var imgTag = imgUrl
-                  ? '<div class="lmm-drawer-item__img"><img src="' +
-                    escapeHtml(imgUrl) +
-                    '" alt="' +
-                    escapeHtml(it.title) +
-                    '" width="128" height="128" /></div>'
-                  : "";
-                var subBtn = it.btnText
-                  ? '<a href="' +
-                    escapeHtml(it.url || "#") +
-                    '" class="lmm-drawer-item__btn">' +
-                    escapeHtml(it.btnText) +
-                    "</a>"
-                  : "";
+              var dividerHtml =
+                cIdx < cols.length - 1 ? '<div class="drawer-divider"></div>' : "";
 
-                return (
-                  '<div class="lmm-drawer-item' +
-                  spanClass +
-                  '"><a href="' +
-                  escapeHtml(it.url || "#") +
-                  '" style="text-decoration:none;text-align:center">' +
-                  imgTag +
-                  '<div class="lmm-drawer-item__title">' +
-                  escapeHtml(it.title) +
-                  renderBadgeHtml(it.badge) +
-                  "</div></a>" +
-                  subBtn +
-                  "</div>"
-                );
-              })
-              .join("");
+              return (
+                '<div class="drawer-column drawer-column--' +
+                posClass +
+                '"><div class="drawer-grid-wrapper text-align-' +
+                escapeHtml(align) +
+                '">' +
+                headingHtml +
+                '<div class="drawer-collection-grid grid-cols-' +
+                mCols +
+                " drawer_grid-cols-" +
+                mCols +
+                '">' +
+                itemsHtml +
+                "</div></div></div>" +
+                dividerHtml
+              );
+            })
+            .join("");
 
-            var headingHtml =
-              col.showHeading && col.heading
-                ? '<h3 class="lmm-drawer-title">' + escapeHtml(col.heading) + "</h3>"
-                : "";
-            var divHtml =
-              cIdx < cols.length - 1 ? '<div class="lmm-drawer-divider"></div>' : "";
+          innerContentHtml =
+            '<div class="drawer-collection-parent drawer-collection-parent--cols-' +
+            cols.length +
+            '">' +
+            colsHtml +
+            "</div>";
+        } else {
+          var ddItems = (tab.dropdownLinks || [])
+            .map(function (dd) {
+              return (
+                '<li><a href="' +
+                escapeHtml(dd.url || "#") +
+                '" class="menu-drawer__menu-item link link--text list-menu__item focus-inset">' +
+                escapeHtml(dd.title) +
+                renderBadgeHtml(dd.badge) +
+                "</a></li>"
+              );
+            })
+            .join("");
+          innerContentHtml =
+            '<ul class="menu-drawer__menu list-menu" role="list" tabindex="-1">' +
+            ddItems +
+            "</ul>";
+        }
 
-            return (
-              headingHtml +
-              '<div class="lmm-drawer-grid lmm-drawer-grid--cols-' +
-              mCols +
-              '">' +
-              itemsHtml +
-              "</div>" +
-              divHtml
-            );
-          })
-          .join("");
-      } else {
-        bodyHtml = (tab.dropdownLinks || [])
-          .map(function (dd) {
-            var kids = (dd.children || [])
-              .map(function (ch) {
-                return (
-                  '<div style="padding:6px 0 6px 14px"><a href="' +
-                  escapeHtml(ch.url || "#") +
-                  '" style="color:#444;text-decoration:none">' +
-                  escapeHtml(ch.title) +
-                  "</a></div>"
-                );
-              })
-              .join("");
-            return (
-              '<div style="margin-bottom:14px"><a href="' +
-              escapeHtml(dd.url || "#") +
-              '" class="lmm-drawer-item__title">' +
-              escapeHtml(dd.title) +
-              "</a>" +
-              kids +
-              "</div>"
-            );
-          })
-          .join("");
-      }
+        return (
+          '<li><details id="Details-menu-drawer-menu-item-' +
+          (idx + 1) +
+          '"><summary id="HeaderDrawer-' +
+          escapeHtml(handle) +
+          '" class="menu-drawer__menu-item list-menu__item link link--text focus-inset"' +
+          colorStyle +
+          ">" +
+          escapeHtml(tab.title) +
+          badgeHtml +
+          rightArrowSvg +
+          caretSvg +
+          '</summary><div id="link-' +
+          escapeHtml(handle) +
+          '" class="menu-drawer__submenu has-submenu gradient motion-reduce" tabindex="-1"><div class="menu-drawer__inner-submenu"><div class="menu-drawer-buttons"><button type="button" aria-expanded="true" class="button-back">' +
+          backSvg +
+          '</button><button type="button" class="button-times" data-lmm-close-all>' +
+          existingCloseSvg +
+          '</button></div><div class="title-menu">' +
+          escapeHtml(tab.title) +
+          "</div>" +
+          innerContentHtml +
+          "</div></div></details></li>"
+        );
+      })
+      .join("");
 
-      subLayer.innerHTML =
-        '<div class="lmm-drawer-topbar">' +
-        '<button type="button" class="lmm-drawer-icon-btn" data-back-root aria-label="Back">' +
-        backSvg +
-        "</button>" +
-        '<button type="button" class="lmm-drawer-icon-btn" data-close-drawer aria-label="Close">' +
-        closeSvg +
-        "</button>" +
-        "</div>" +
-        '<div class="lmm-drawer-sub-body">' +
-        '<div class="lmm-drawer-title">' +
-        escapeHtml(tab.title) +
-        "</div>" +
-        bodyHtml +
-        "</div>";
-      subLayer.scrollTop = 0;
-      requestAnimationFrame(function () {
-        subLayer.classList.add("is-active");
+    ul.innerHTML = listHtml;
+
+    // Bind Dawn's native MenuDrawer event handlers to our newly injected <summary> & <button> nodes
+    if (typeof drawerEl.onSummaryClick === "function") {
+      ul.querySelectorAll("summary").forEach(function (s) {
+        s.addEventListener("click", drawerEl.onSummaryClick.bind(drawerEl));
       });
     }
-
-    function openDrawer() {
-      renderRoot();
-      subLayer.classList.remove("is-active");
-      rootLayer.scrollTop = 0;
-      requestAnimationFrame(function () {
-        panel.classList.add("is-open");
+    if (typeof drawerEl.onCloseButtonClick === "function") {
+      ul.querySelectorAll("button.button-back").forEach(function (b) {
+        b.addEventListener("click", drawerEl.onCloseButtonClick.bind(drawerEl));
       });
-      document.documentElement.style.overflow = "hidden";
     }
-
-    function closeDrawer() {
-      panel.classList.remove("is-open");
-      subLayer.classList.remove("is-active");
-      document.documentElement.style.overflow = "";
-    }
-
-    panel.addEventListener("click", function (e) {
-      var target = e.target.closest("[data-close-drawer], [data-back-root], [data-open-tab]");
-      if (!target) return;
-      if (target.hasAttribute("data-close-drawer")) {
-        closeDrawer();
-      } else if (target.hasAttribute("data-back-root")) {
-        subLayer.classList.remove("is-active");
-      } else if (target.hasAttribute("data-open-tab")) {
-        var id = target.getAttribute("data-open-tab");
-        var found = tabs.find(function (t) {
-          return t.id === id;
-        });
-        if (found) renderSubmenu(found);
-      }
+    ul.querySelectorAll("[data-lmm-close-all]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var toggle = document.getElementById("Details-menu-drawer-toggle");
+        if (toggle) toggle.click();
+      });
     });
 
-    // Intercept hamburger click on existing header-drawer
-    var toggle =
-      drawerEl.querySelector("#Details-menu-drawer-toggle") ||
-      drawerEl.querySelector("summary") ||
-      drawerEl;
-    toggle.addEventListener(
-      "click",
-      function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        openDrawer();
-      },
-      true
-    );
+    // Update utility links (Account & Phone) inside existing .menu-drawer__utility-links
+    var ms = menu.mobileSettings || {};
+    var accountEl = drawerEl.querySelector(".menu-drawer__account");
+    if (accountEl) {
+      accountEl.style.display = ms.showAccountLink === false ? "none" : "";
+    }
+    var phoneWrap = drawerEl.querySelector(".company-contact-info");
+    var phoneLink = drawerEl.querySelector(".company-contact-info .company-phone");
+    if (phoneWrap && phoneLink) {
+      if (ms.showPhoneButton === false) {
+        phoneWrap.style.display = "none";
+      } else {
+        phoneWrap.style.display = "";
+        if (ms.phoneDisplay) {
+          var svgEl = phoneLink.querySelector("svg");
+          var svgHtml = svgEl ? svgEl.outerHTML : "";
+          phoneLink.innerHTML = svgHtml + " " + escapeHtml(ms.phoneDisplay);
+        }
+        if (ms.phoneHref) {
+          phoneLink.setAttribute("href", ms.phoneHref);
+        }
+        if (ms.phoneBgColor && ms.phoneBgColor.toLowerCase() !== "#8c1b11") {
+          phoneLink.style.background = ms.phoneBgColor;
+        }
+      }
+    }
   }
 
   function applyStyleSettings(menu) {
@@ -625,7 +609,6 @@
       if (newNav) {
         desktopTarget.replaceWith(newNav);
 
-        // Hover interaction with 120ms grace timer (same UX as Lexor's header-mega-menu.liquid)
         var menus = newNav.querySelectorAll(".mega-menu");
         menus.forEach(function (menuEl) {
           var timer;
@@ -645,10 +628,10 @@
       }
     }
 
-    // 2. Mount Mobile Drawer
+    // 2. Hydrate Native <header-drawer>
     var drawerTarget = document.querySelector(drawerSelector);
     if (drawerTarget) {
-      mountMobileDrawer(drawerTarget, activeMenu, {
+      hydrateNativeMobileDrawer(drawerTarget, activeMenu, {
         filesBaseUrl: filesBaseUrl,
         customerLoggedIn: configEl.dataset.customerLoggedIn === "true",
         customerAccountsEnabled: configEl.dataset.customerAccountsEnabled === "true",
