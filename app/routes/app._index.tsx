@@ -22,6 +22,7 @@ import {
 import { ClipboardIcon, ExportIcon, ImportIcon, PlusIcon } from "@shopify/polaris-icons";
 import { authenticate } from "../shopify.server";
 import { loadAllPresets, saveAllPresets } from "../lib/shopify-menu-storage.server";
+import { loadStorefrontThemes } from "../lib/shopify-themes.server";
 import {
   importFromShopifyMenu,
   type ShopifyNavMenuSummary,
@@ -33,8 +34,11 @@ import type { MenuPreset } from "../types/menu";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
-  const presets = await loadAllPresets(admin);
-  return { presets, shop: session.shop };
+  const [presets, themeCtx] = await Promise.all([
+    loadAllPresets(admin),
+    loadStorefrontThemes(admin, session.shop),
+  ]);
+  return { presets, shop: session.shop, themes: themeCtx.themes };
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -173,7 +177,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function MegaMenuDashboard() {
-  const { presets, shop } = useLoaderData<typeof loader>();
+  const { presets, shop, themes } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const { t, locale } = useI18n();
   const fetcher = useFetcher<{
@@ -341,6 +345,17 @@ export default function MegaMenuDashboard() {
                           {isDefault && (
                             <Badge tone="attention">{t("badgeDefault")}</Badge>
                           )}
+                          {(preset.assignedThemeIds || []).map((tid) => {
+                            const th = themes.find((x) => x.numericId === tid);
+                            return (
+                              <Badge
+                                key={tid}
+                                tone={th?.role === "MAIN" ? "success" : "info"}
+                              >
+                                {th ? `Theme: ${th.name}` : `Theme #${tid}`}
+                              </Badge>
+                            );
+                          })}
                           {schedule?.enabled && (
                             <Badge tone="warning">
                               {`${t("badgeScheduled")} (${schedule.startAt || "..."} → ${schedule.endAt || "..."})`}

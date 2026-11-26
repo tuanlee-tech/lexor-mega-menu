@@ -21,6 +21,7 @@
     id="lexor-mega-menu-config"
     type="application/json"
     data-mode="{% if override_preset != blank %}override{% else %}active{% endif %}"
+    data-theme-id="{{ theme.id }}"
     data-desktop-selector="{{ block.settings.desktop_selector | escape }}"
     data-drawer-selector="{{ block.settings.drawer_selector | escape }}"
     data-customer-logged-in="{% if customer %}true{% else %}false{% endif %}"

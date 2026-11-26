@@ -5,19 +5,28 @@ import { useAppBridge } from "@shopify/app-bridge-react";
 import { Badge, InlineStack, Page } from "@shopify/polaris";
 import { authenticate } from "../shopify.server";
 import { loadAllPresets, saveAllPresets } from "../lib/shopify-menu-storage.server";
+import { loadStorefrontThemes } from "../lib/shopify-themes.server";
 import { useI18n } from "../lib/i18n";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import type { MenuPreset } from "../types/menu";
 import { MenuEditorWorkspace } from "../components/editor/MenuEditorWorkspace";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const { admin } = await authenticate.admin(request);
-  const presets = await loadAllPresets(admin);
+  const { admin, session } = await authenticate.admin(request);
+  const [presets, themeCtx] = await Promise.all([
+    loadAllPresets(admin),
+    loadStorefrontThemes(admin, session.shop),
+  ]);
   const preset = presets.find((p) => p.id === params.id);
   if (!preset) {
     throw new Response("Menu preset not found", { status: 404 });
   }
-  return { preset };
+  return {
+    preset,
+    themes: themeCtx.themes,
+    storefrontUrl: themeCtx.storefrontUrl,
+    missingThemesScope: Boolean(themeCtx.missingThemesScope),
+  };
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
@@ -51,12 +60,19 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         : incoming.isDefault,
   };
 
+  const claimedThemes = new Set(updatedPreset.assignedThemeIds || []);
+
   const nextPresets = presets.map((p) => {
     if (p.id === updatedPreset.id) return updatedPreset;
-    if (intent === "publish" && updatedPreset.isDefault) {
-      return { ...p, isDefault: false };
-    }
-    return p;
+    const cleanedAssigned = (p.assignedThemeIds || []).filter(
+      (tid) => !claimedThemes.has(tid)
+    );
+    return {
+      ...p,
+      assignedThemeIds: cleanedAssigned,
+      isDefault:
+        intent === "publish" && updatedPreset.isDefault ? false : p.isDefault,
+    };
   });
 
   const result = await saveAllPresets(admin, nextPresets);
@@ -72,7 +88,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 };
 
 export default function MenuPresetEditorPage() {
-  const { preset: initialPreset } = useLoaderData<typeof loader>();
+  const {
+    preset: initialPreset,
+    themes,
+    storefrontUrl,
+    missingThemesScope,
+  } = useLoaderData<typeof loader>();
   const [savedSnapshot, setSavedSnapshot] = useState<string>(() =>
     JSON.stringify(initialPreset)
   );
@@ -164,7 +185,13 @@ export default function MenuPresetEditorPage() {
         },
       ]}
     >
-      <MenuEditorWorkspace preset={preset} onChange={setPreset} />
+      <MenuEditorWorkspace
+        preset={preset}
+        onChange={setPreset}
+        themes={themes}
+        storefrontUrl={storefrontUrl}
+        missingThemesScope={missingThemesScope}
+      />
     </Page>
   );
 }

@@ -17,9 +17,11 @@ import { CSS } from "@dnd-kit/utilities";
 import {
   Badge,
   BlockStack,
+  Box,
   Button,
   Card,
   Checkbox,
+  Divider,
   FormLayout,
   InlineStack,
   Text,
@@ -31,7 +33,7 @@ import {
   PaintBrushFlatIcon,
   PlusIcon,
 } from "@shopify/polaris-icons";
-import type { MenuPreset, TopLevelItem } from "../../types/menu";
+import type { MenuPreset, ShopifyThemeSummary, TopLevelItem } from "../../types/menu";
 import { createDefaultTopLevelItem } from "../../lib/menu-utils";
 import { useI18n } from "../../lib/i18n";
 import { LivePreviewPane } from "../preview/LivePreviewPane";
@@ -42,6 +44,9 @@ import { StyleSettingsModal } from "./StyleSettingsModal";
 interface MenuEditorWorkspaceProps {
   preset: MenuPreset;
   onChange: (updated: MenuPreset) => void;
+  themes: ShopifyThemeSummary[];
+  storefrontUrl: string;
+  missingThemesScope?: boolean;
 }
 
 function SortableTabChip({
@@ -147,6 +152,9 @@ function SortableTabChip({
 export function MenuEditorWorkspace({
   preset,
   onChange,
+  themes,
+  storefrontUrl,
+  missingThemesScope,
 }: MenuEditorWorkspaceProps) {
   const { t } = useI18n();
   const [selectedTabId, setSelectedTabId] = useState<string | null>(
@@ -222,6 +230,69 @@ export function MenuEditorWorkspace({
                 onChange={(v) => onChange({ ...preset, name: v })}
                 autoComplete="off"
               />
+
+              <Divider />
+
+              <BlockStack gap="200">
+                <Text as="h3" variant="headingSm">
+                  {t("assignedThemesLabel")}
+                </Text>
+                <Text as="p" variant="bodySm" tone="subdued">
+                  {t("assignedThemesHelp")}
+                </Text>
+
+                {themes.length > 0 ? (
+                  <Box
+                    padding="300"
+                    borderWidth="025"
+                    borderColor="border"
+                    borderRadius="200"
+                    background="bg-surface-secondary"
+                  >
+                    <BlockStack gap="150">
+                      {themes.map((th) => {
+                        const checked = Boolean(
+                          preset.assignedThemeIds?.includes(th.numericId)
+                        );
+                        return (
+                          <InlineStack
+                            key={th.id}
+                            align="space-between"
+                            blockAlign="center"
+                          >
+                            <Checkbox
+                              label={th.name}
+                              checked={checked}
+                              onChange={(nextChecked) => {
+                                const cur = new Set(preset.assignedThemeIds || []);
+                                if (nextChecked) cur.add(th.numericId);
+                                else cur.delete(th.numericId);
+                                onChange({
+                                  ...preset,
+                                  assignedThemeIds: Array.from(cur),
+                                });
+                              }}
+                            />
+                            <Badge tone={th.role === "MAIN" ? "success" : "info"}>
+                              {th.role === "MAIN"
+                                ? t("themeRoleLive")
+                                : t("themeRoleDraft")}
+                            </Badge>
+                          </InlineStack>
+                        );
+                      })}
+                    </BlockStack>
+                  </Box>
+                ) : (
+                  missingThemesScope && (
+                    <Text as="p" variant="bodyXs" tone="caution">
+                      {t("assignedThemesMissingScope")}
+                    </Text>
+                  )
+                )}
+              </BlockStack>
+
+              <Divider />
               <Checkbox
                 label={t("editorPresetSchedule")}
                 checked={Boolean(preset.schedule?.enabled)}
@@ -357,6 +428,8 @@ export function MenuEditorWorkspace({
           preset={preset}
           activeTabId={selectedTab?.id || null}
           onSelectTab={(tabId) => setSelectedTabId(tabId)}
+          themes={themes}
+          storefrontUrl={storefrontUrl}
         />
       </div>
 

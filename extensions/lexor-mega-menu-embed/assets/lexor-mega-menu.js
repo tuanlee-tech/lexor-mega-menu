@@ -55,8 +55,11 @@
     return "";
   }
 
-  function pickActiveMenu(config) {
+  function pickActiveMenu(config, themeId) {
     if (!config) return null;
+    if (themeId && config.themeMenus && config.themeMenus[themeId]) {
+      return config.themeMenus[themeId];
+    }
     if (Array.isArray(config.scheduledMenus)) {
       for (var i = 0; i < config.scheduledMenus.length; i++) {
         var m = config.scheduledMenus[i];
@@ -579,26 +582,13 @@
     document.head.appendChild(styleTag);
   }
 
-  function init() {
-    var configEl = document.getElementById("lexor-mega-menu-config");
-    if (!configEl) return;
-
-    var config;
-    try {
-      config = JSON.parse(configEl.textContent || "null");
-    } catch (e) {
-      return;
-    }
-
-    var mode = configEl.dataset.mode || "active";
-    var activeMenu = mode === "override" ? config : pickActiveMenu(config);
+  function mountAll(activeMenu, opts) {
     if (!activeMenu) return;
-
     applyStyleSettings(activeMenu);
 
-    var desktopSelector = configEl.dataset.desktopSelector || ".header__inline-menu";
-    var drawerSelector = configEl.dataset.drawerSelector || "header-drawer";
-    var filesBaseUrl = configEl.dataset.filesBaseUrl || "";
+    var desktopSelector = opts.desktopSelector || ".header__inline-menu";
+    var drawerSelector = opts.drawerSelector || "header-drawer";
+    var filesBaseUrl = opts.filesBaseUrl || "";
 
     // 1. Replace Desktop Inline Menu
     var desktopTarget = document.querySelector(desktopSelector);
@@ -625,6 +615,19 @@
             }, 120);
           });
         });
+
+        if (typeof opts.openTabId === "string" && opts.openTabId && opts.device !== "mobile") {
+          var visibleDesktopTabs = (activeMenu.items || []).filter(function (t) {
+            return t.visibility !== "mobile";
+          });
+          var openIdx = visibleDesktopTabs.findIndex(function (t) {
+            return t.id === opts.openTabId;
+          });
+          if (openIdx >= 0) {
+            var targetMenuEl = newNav.querySelector('[data-lmm-tab="' + openIdx + '"]');
+            if (targetMenuEl) targetMenuEl.classList.add("is-open");
+          }
+        }
       }
     }
 
@@ -633,11 +636,62 @@
     if (drawerTarget) {
       hydrateNativeMobileDrawer(drawerTarget, activeMenu, {
         filesBaseUrl: filesBaseUrl,
-        customerLoggedIn: configEl.dataset.customerLoggedIn === "true",
-        customerAccountsEnabled: configEl.dataset.customerAccountsEnabled === "true",
-        accountUrl: configEl.dataset.accountUrl || "/account/login",
+        customerLoggedIn: Boolean(opts.customerLoggedIn),
+        customerAccountsEnabled: opts.customerAccountsEnabled !== false,
+        accountUrl: opts.accountUrl || "/account/login",
       });
+
+      if (opts.device === "mobile") {
+        var mainDetails = drawerTarget.querySelector("#Details-menu-drawer-container") || drawerTarget.querySelector("details");
+        if (mainDetails && !mainDetails.hasAttribute("open")) {
+          var toggle = drawerTarget.querySelector("#Details-menu-drawer-toggle") || mainDetails.querySelector("summary");
+          if (toggle) toggle.click();
+        }
+      }
     }
+  }
+
+  function init() {
+    var configEl = document.getElementById("lexor-mega-menu-config");
+    var baseOpts = {
+      desktopSelector: (configEl && configEl.dataset.desktopSelector) || ".header__inline-menu",
+      drawerSelector: (configEl && configEl.dataset.drawerSelector) || "header-drawer",
+      filesBaseUrl: (configEl && configEl.dataset.filesBaseUrl) || "",
+      customerLoggedIn: configEl && configEl.dataset.customerLoggedIn === "true",
+      customerAccountsEnabled: !configEl || configEl.dataset.customerAccountsEnabled !== "false",
+      accountUrl: (configEl && configEl.dataset.accountUrl) || "/account/login",
+    };
+
+    // Listen for live Admin Preview updates via postMessage
+    window.addEventListener("message", function (ev) {
+      if (!ev.data || ev.data.type !== "LMM_LIVE_PREVIEW_UPDATE") return;
+      mountAll(ev.data.menu, {
+        desktopSelector: baseOpts.desktopSelector,
+        drawerSelector: baseOpts.drawerSelector,
+        filesBaseUrl: ev.data.filesBaseUrl || baseOpts.filesBaseUrl,
+        customerLoggedIn: baseOpts.customerLoggedIn,
+        customerAccountsEnabled: baseOpts.customerAccountsEnabled,
+        accountUrl: baseOpts.accountUrl,
+        openTabId: ev.data.openTabId || "",
+        device: ev.data.device || "desktop",
+      });
+    });
+
+    if (!configEl) return;
+
+    var config;
+    try {
+      config = JSON.parse(configEl.textContent || "null");
+    } catch (e) {
+      return;
+    }
+
+    var mode = configEl.dataset.mode || "active";
+    var themeId = configEl.dataset.themeId || "";
+    var activeMenu = mode === "override" ? config : pickActiveMenu(config, themeId);
+    if (!activeMenu) return;
+
+    mountAll(activeMenu, baseOpts);
   }
 
   if (document.readyState === "loading") {

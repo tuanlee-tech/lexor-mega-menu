@@ -97,11 +97,19 @@ export interface MenuStyleSettings {
   customCss: string;
 }
 
+export interface ShopifyThemeSummary {
+  id: string;
+  numericId: string;
+  name: string;
+  role: string; // MAIN | UNPUBLISHED | DEVELOPMENT
+}
+
 export interface MenuPreset {
   id: string;
   name: string;
   status: "DRAFT" | "PUBLISHED";
   isDefault: boolean;
+  assignedThemeIds?: string[];
   schedule?: ScheduleConfig;
   items: TopLevelItem[];
   mobileSettings: MobileDrawerSettings;
@@ -115,4 +123,5 @@ export interface StorefrontActiveConfig {
   updatedAt: string;
   defaultMenu: MenuPreset | null;
   scheduledMenus: MenuPreset[];
+  themeMenus?: Record<string, MenuPreset>;
 }

@@ -21,7 +21,7 @@ api_version = "2027-01"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_online_store_navigation,read_products,read_content,read_files,write_files"
+scopes = "read_online_store_navigation,read_products,read_content,read_files,write_files,read_themes"
 optional_scopes = [ ]
 use_legacy_install_flow = false
 

@@ -87,11 +87,22 @@ export async function saveAllPresets(
     (p) => p.status === "PUBLISHED" && p.schedule?.enabled
   );
 
+  // Build per-theme assignment map (supports assigning even Draft presets to specific themes!)
+  const themeMenus: Record<string, MenuPreset> = {};
+  for (const p of presets) {
+    for (const themeId of p.assignedThemeIds || []) {
+      if (themeId) {
+        themeMenus[String(themeId)] = p;
+      }
+    }
+  }
+
   const activeConfig: StorefrontActiveConfig = {
     version: 1,
     updatedAt: new Date().toISOString(),
     defaultMenu,
     scheduledMenus,
+    themeMenus,
   };
 
   const mutation = `
