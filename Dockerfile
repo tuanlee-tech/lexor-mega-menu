@@ -11,8 +11,8 @@ RUN npm ci && npm cache clean --force
 
 COPY . .
 
-RUN npx prisma generate && npm run build
+RUN npx prisma generate && npx prisma migrate deploy && npm run build
 
 ENV NODE_ENV=production
 
-CMD ["npm", "run", "docker-start"]
+CMD ["npm", "run", "start"]
