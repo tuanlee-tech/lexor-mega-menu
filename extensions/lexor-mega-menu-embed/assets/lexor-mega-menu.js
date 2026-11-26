@@ -78,7 +78,7 @@
       .map(function (tab, idx) {
         var handle = toHandle(tab.title);
         var titleStyle = tab.highlightColor
-          ? ' style="color:' + escapeHtml(tab.highlightColor) + ' !important"'
+          ? ' style="color:' + escapeHtml(tab.highlightColor) + '"'
           : "";
         var badgeHtml = renderBadgeHtml(tab.badge);
 
