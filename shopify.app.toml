@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 name = "Lexor Mega Menu"
-application_url = "https://shopify.dev/apps/default-app-home"
+application_url = "https://lexor-mega-menu.onrender.com"
 embedded = true
 client_id = "568f4388307e8ddc5d7f14306103a94a"
 
@@ -27,4 +27,9 @@ optional_scopes = [ ]
 use_legacy_install_flow = false
 
 [auth]
-redirect_urls = [ "https://shopify.dev/apps/default-app-home/api/auth" ]
+redirect_urls = [
+  "https://lexor-mega-menu.onrender.com/api/auth",
+  "https://lexor-mega-menu.onrender.com/auth/callback",
+  "https://lexor-mega-menu.onrender.com/auth/shopify/callback",
+  "https://lexor-mega-menu.onrender.com/api/auth/callback"
+]
