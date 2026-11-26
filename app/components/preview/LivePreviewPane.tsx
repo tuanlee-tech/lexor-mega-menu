@@ -3,39 +3,32 @@ import {
   Badge,
   BlockStack,
   Button,
-  ButtonGroup,
   Card,
-  Checkbox,
   InlineStack,
   Select,
   Text,
 } from "@shopify/polaris";
-import { DesktopIcon, ExternalIcon, MobileIcon } from "@shopify/polaris-icons";
+import { ExternalIcon } from "@shopify/polaris-icons";
 import type { MenuPreset, ShopifyThemeSummary } from "../../types/menu";
 import { useI18n } from "../../lib/i18n";
-import { DesktopMegaPreview } from "./DesktopMegaPreview";
-import { MobileDrawerPreview } from "./MobileDrawerPreview";
 import { RealStorefrontPreview } from "./RealStorefrontPreview";
 
 interface LivePreviewPaneProps {
   preset: MenuPreset;
   activeTabId: string | null;
-  onSelectTab: (tabId: string) => void;
   themes: ShopifyThemeSummary[];
   storefrontUrl: string;
+  saveVersion: number;
 }
 
 export function LivePreviewPane({
   preset,
   activeTabId,
-  onSelectTab,
   themes,
   storefrontUrl,
+  saveVersion,
 }: LivePreviewPaneProps) {
   const { t } = useI18n();
-  const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
-  const [mode, setMode] = useState<"real" | "mock">("real");
-  const [enforceSchedule, setEnforceSchedule] = useState(false);
 
   const defaultThemeId =
     preset.assignedThemeIds?.[0] ||
@@ -46,6 +39,8 @@ export function LivePreviewPane({
   const [selectedThemeId, setSelectedThemeId] = useState<string>(defaultThemeId);
 
   const currentThemeId = selectedThemeId || defaultThemeId;
+  const currentTheme = themes.find((th) => th.numericId === currentThemeId);
+  const currentThemeLabel = currentTheme ? currentTheme.name : "";
   const isCurrentThemeAssigned = Boolean(
     currentThemeId && preset.assignedThemeIds?.includes(currentThemeId)
   );
@@ -72,104 +67,44 @@ export function LivePreviewPane({
             </Text>
           </BlockStack>
 
-          <InlineStack gap="200" wrap>
-            <ButtonGroup variant="segmented">
-              <Button
-                size="slim"
-                pressed={mode === "real"}
-                onClick={() => setMode("real")}
-              >
-                {t("previewModeReal")}
-              </Button>
-              <Button
-                size="slim"
-                pressed={mode === "mock"}
-                onClick={() => setMode("mock")}
-              >
-                {t("previewModeMock")}
-              </Button>
-            </ButtonGroup>
-
-            <ButtonGroup variant="segmented">
-              <Button
-                size="slim"
-                pressed={device === "desktop"}
-                onClick={() => setDevice("desktop")}
-                icon={DesktopIcon}
-              >
-                {t("desktop")}
-              </Button>
-              <Button
-                size="slim"
-                pressed={device === "mobile"}
-                onClick={() => setDevice("mobile")}
-                icon={MobileIcon}
-              >
-                {t("mobile")}
-              </Button>
-            </ButtonGroup>
-          </InlineStack>
+          <Button
+            size="slim"
+            url={externalPreviewUrl}
+            external
+            icon={ExternalIcon}
+          >
+            {t("previewOpenExternal")}
+          </Button>
         </InlineStack>
 
         {themes.length > 0 && (
-          <InlineStack gap="200" blockAlign="end" wrap>
-            <div style={{ flex: 1, minWidth: "220px" }}>
-              <Select
-                label={t("previewThemeSelect")}
-                options={themes.map((th) => {
-                  const roleLabel =
-                    th.role === "MAIN" ? t("themeRoleLive") : t("themeRoleDraft");
-                  const assignedMark = preset.assignedThemeIds?.includes(th.numericId)
-                    ? ` ★ ${t("previewAssignedBadge")}`
-                    : "";
-                  return {
-                    label: `${th.name} [${roleLabel}]${assignedMark}`,
-                    value: th.numericId,
-                  };
-                })}
-                value={currentThemeId}
-                onChange={setSelectedThemeId}
-              />
-            </div>
-            <Button
-              url={externalPreviewUrl}
-              external
-              icon={ExternalIcon}
-            >
-              {t("previewOpenExternal")}
-            </Button>
-          </InlineStack>
-        )}
-
-        {mode === "mock" && (
-          <Checkbox
-            label={t("previewScheduleToggle")}
-            checked={enforceSchedule}
-            onChange={setEnforceSchedule}
+          <Select
+            label={t("previewThemeSelect")}
+            labelInline
+            options={themes.map((th) => {
+              const roleLabel =
+                th.role === "MAIN" ? t("themeRoleLive") : t("themeRoleDraft");
+              const assignedMark = preset.assignedThemeIds?.includes(th.numericId)
+                ? ` ★ ${t("previewAssignedBadge")}`
+                : "";
+              return {
+                label: `${th.name} [${roleLabel}]${assignedMark}`,
+                value: th.numericId,
+              };
+            })}
+            value={currentThemeId}
+            onChange={setSelectedThemeId}
           />
         )}
 
-        {mode === "real" ? (
-          <RealStorefrontPreview
-            preset={preset}
-            device={device}
-            activeTabId={activeTabId}
-            themeNumericId={currentThemeId}
-            onFallbackToWireframe={() => setMode("mock")}
-          />
-        ) : device === "desktop" ? (
-          <DesktopMegaPreview
-            preset={preset}
-            activeTabId={activeTabId}
-            onSelectTab={onSelectTab}
-            enforceSchedule={enforceSchedule}
-          />
-        ) : (
-          <MobileDrawerPreview
-            preset={preset}
-            enforceSchedule={enforceSchedule}
-          />
-        )}
+        <RealStorefrontPreview
+          preset={preset}
+          activeTabId={activeTabId}
+          themeNumericId={currentThemeId}
+          themeLabel={currentThemeLabel}
+          storefrontUrl={storefrontUrl}
+          saveVersion={saveVersion}
+        />
       </BlockStack>
     </Card>
   );

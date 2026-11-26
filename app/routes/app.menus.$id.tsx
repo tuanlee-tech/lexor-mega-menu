@@ -10,6 +10,8 @@ import { useI18n } from "../lib/i18n";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import type { MenuPreset } from "../types/menu";
 import { MenuEditorWorkspace } from "../components/editor/MenuEditorWorkspace";
+import { invalidateStorefrontPreviewCache } from "../lib/storefront-preview-cache.server";
+import { clearAllClientPreviewCache } from "../components/preview/RealStorefrontPreview";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
@@ -30,7 +32,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
-  const { admin } = await authenticate.admin(request);
+  const { admin, session } = await authenticate.admin(request);
   const formData = await request.formData();
   const intent = String(formData.get("intent") || "save_draft");
   const rawPreset = String(formData.get("preset") || "");
@@ -80,6 +82,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     return { ok: false, error: result.error };
   }
 
+  invalidateStorefrontPreviewCache(session.shop);
+
   return {
     ok: true,
     preset: updatedPreset,
@@ -98,6 +102,7 @@ export default function MenuPresetEditorPage() {
     JSON.stringify(initialPreset)
   );
   const [preset, setPreset] = useState<MenuPreset>(initialPreset);
+  const [saveVersion, setSaveVersion] = useState<number>(0);
   const { t, locale } = useI18n();
   const fetcher = useFetcher<{
     ok?: boolean;
@@ -115,8 +120,10 @@ export default function MenuPresetEditorPage() {
 
   useEffect(() => {
     if (fetcher.data?.ok && fetcher.data.preset) {
+      clearAllClientPreviewCache();
       setPreset(fetcher.data.preset);
       setSavedSnapshot(JSON.stringify(fetcher.data.preset));
+      setSaveVersion((v) => v + 1);
       shopify.toast.show(
         fetcher.data.published
           ? locale === "vi"
@@ -191,6 +198,7 @@ export default function MenuPresetEditorPage() {
         themes={themes}
         storefrontUrl={storefrontUrl}
         missingThemesScope={missingThemesScope}
+        saveVersion={saveVersion}
       />
     </Page>
   );

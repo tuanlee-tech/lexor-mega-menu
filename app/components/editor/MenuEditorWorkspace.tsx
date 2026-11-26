@@ -47,6 +47,7 @@ interface MenuEditorWorkspaceProps {
   themes: ShopifyThemeSummary[];
   storefrontUrl: string;
   missingThemesScope?: boolean;
+  saveVersion: number;
 }
 
 function SortableTabChip({
@@ -155,6 +156,7 @@ export function MenuEditorWorkspace({
   themes,
   storefrontUrl,
   missingThemesScope,
+  saveVersion,
 }: MenuEditorWorkspaceProps) {
   const { t } = useI18n();
   const [selectedTabId, setSelectedTabId] = useState<string | null>(
@@ -427,9 +429,9 @@ export function MenuEditorWorkspace({
         <LivePreviewPane
           preset={preset}
           activeTabId={selectedTab?.id || null}
-          onSelectTab={(tabId) => setSelectedTabId(tabId)}
           themes={themes}
           storefrontUrl={storefrontUrl}
+          saveVersion={saveVersion}
         />
       </div>
 

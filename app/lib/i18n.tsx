@@ -191,8 +191,8 @@ export const dictionary = {
     styleCustomCssLabel: "Custom CSS (applied live on Publish — no re-deploy needed)",
 
     // Live Preview
-    previewTitle: "Live Preview",
-    previewSubtitle: "Preview on your actual storefront HTML/CSS or fast wireframe.",
+    previewTitle: "Live Storefront Preview",
+    previewSubtitle: "Cached real storefront HTML/CSS with simultaneous Desktop & Mobile view (refreshes on Save).",
     previewModeReal: "Real Storefront",
     previewModeMock: "Wireframe",
     previewThemeSelect: "Preview theme",
@@ -395,8 +395,8 @@ export const dictionary = {
     styleCustomCssLabel: "Custom CSS (áp dụng trực tiếp khi Publish — không cần re-deploy)",
 
     // Live Preview
-    previewTitle: "Xem trước trực tiếp",
-    previewSubtitle: "Render trực tiếp HTML/CSS thật của Storefront hoặc chế độ khung nhanh.",
+    previewTitle: "Xem trước Storefront",
+    previewSubtitle: "HTML/CSS thật đã được cache — hiển thị đồng thời Desktop & Mobile (tự làm mới khi Lưu).",
     previewModeReal: "Web thật",
     previewModeMock: "Khung mô phỏng",
     previewThemeSelect: "Đang xem trên Theme",

@@ -3,11 +3,32 @@ import path from "node:path";
 import type { LoaderFunctionArgs } from "react-router";
 import { authenticate } from "../shopify.server";
 import { loadStorefrontThemes } from "../lib/shopify-themes.server";
+import {
+  getCachedStorefrontPreview,
+  setCachedStorefrontPreview,
+} from "../lib/storefront-preview-cache.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
   const url = new URL(request.url);
   const themeNumericId = url.searchParams.get("themeId") || "";
+  const forceRefresh = url.searchParams.get("refresh") === "1";
+
+  const cacheKey = `${session.shop}:${themeNumericId || "default"}`;
+  if (!forceRefresh) {
+    const hit = getCachedStorefrontPreview(cacheKey);
+    if (hit) {
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          html: hit.html,
+          storefrontUrl: hit.storefrontUrl,
+          cached: true,
+        }),
+        { headers: { "Content-Type": "application/json" } }
+      );
+    }
+  }
 
   const ctx = await loadStorefrontThemes(admin, session.shop);
   const baseOrigin = ctx.storefrontUrl.replace(/\/$/, "");
@@ -30,7 +51,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       return new Response(
         JSON.stringify({
           ok: false,
-          passwordProtected: true,
+          error: "Storefront is currently password-protected.",
           storefrontUrl: baseOrigin,
         }),
         { headers: { "Content-Type": "application/json" } }
@@ -39,7 +60,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
     let html = await res.text();
 
-    // Read our exact storefront extension CSS & JS
     const cssPath = path.resolve(
       process.cwd(),
       "extensions/lexor-mega-menu-embed/assets/lexor-mega-menu.css"
@@ -51,7 +71,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     const lmmCss = fs.existsSync(cssPath) ? fs.readFileSync(cssPath, "utf8") : "";
     const lmmJs = fs.existsSync(jsPath) ? fs.readFileSync(jsPath, "utf8") : "";
 
-    // Strip Shopify exit-interstitial & third-party chat/analytics scripts for fast, clean preview
+    // Strip third-party chat/analytics/exit-interstitial scripts for fast, distraction-free rendering
     html = html
       .replace(
         /<script[^>]*data-source-attribution="shopify\.exit_interstitial"[^>]*>[\s\S]*?<\/script>/gi,
@@ -60,7 +80,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       .replace(/<script[^>]*googletagmanager[^>]*>[\s\S]*?<\/script>/gi, "")
       .replace(/<script[^>]*salesiq[^>]*>[\s\S]*?<\/script>/gi, "");
 
-    // Remove any existing lexor-mega-menu-config from the fetched page so our live preview drives it cleanly
     html = html.replace(
       /<script[^>]*id="lexor-mega-menu-config"[^>]*>[\s\S]*?<\/script>/gi,
       ""
@@ -69,8 +88,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     const previewInjection = `
       <base href="${baseOrigin}/" />
       <style>
-        #shopify-pc__banner, .zsiq_floatmain, #PBarNextFrameWrapper, .preview-bar-iframe { display: none !important; }
-        /* Prevent accidental navigation away inside preview iframe */
+        #shopify-pc__banner, .zsiq_floatmain, #PBarNextFrameWrapper, .preview-bar-iframe, [id*="zsiq"] { display: none !important; }
         a[href] { cursor: pointer; }
         ${lmmCss}
       </style>
@@ -91,11 +109,18 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       html = previewInjection + html;
     }
 
+    setCachedStorefrontPreview(cacheKey, {
+      html,
+      storefrontUrl: baseOrigin,
+      cachedAt: Date.now(),
+    });
+
     return new Response(
       JSON.stringify({
         ok: true,
         html,
         storefrontUrl: baseOrigin,
+        cached: false,
       }),
       { headers: { "Content-Type": "application/json" } }
     );

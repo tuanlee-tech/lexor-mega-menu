@@ -31,6 +31,8 @@ import { createBlankPreset, createLexorDemoPreset, uid } from "../lib/menu-utils
 import { useI18n } from "../lib/i18n";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import type { MenuPreset } from "../types/menu";
+import { invalidateStorefrontPreviewCache } from "../lib/storefront-preview-cache.server";
+import { clearAllClientPreviewCache } from "../components/preview/RealStorefrontPreview";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
@@ -42,7 +44,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const { admin } = await authenticate.admin(request);
+  const { admin, session } = await authenticate.admin(request);
   const formData = await request.formData();
   const intent = String(formData.get("intent") || "");
   const presets = await loadAllPresets(admin);
@@ -141,6 +143,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         : { ...p, isDefault: false }
     );
     const result = await saveAllPresets(admin, next);
+    if (result.ok) invalidateStorefrontPreviewCache(session.shop);
     return result.ok
       ? { ok: true, message: "Published as active storefront menu" }
       : { ok: false, error: result.error };
@@ -159,6 +162,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         : p
     );
     const result = await saveAllPresets(admin, next);
+    if (result.ok) invalidateStorefrontPreviewCache(session.shop);
     return result.ok
       ? { ok: true, message: "Moved back to Draft" }
       : { ok: false, error: result.error };
@@ -168,6 +172,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const id = String(formData.get("id") || "");
     const next = presets.filter((p) => p.id !== id);
     const result = await saveAllPresets(admin, next);
+    if (result.ok) invalidateStorefrontPreviewCache(session.shop);
     return result.ok
       ? { ok: true, message: "Menu deleted" }
       : { ok: false, error: result.error };
@@ -212,6 +217,7 @@ export default function MegaMenuDashboard() {
       return;
     }
     if (fetcher.data?.message) {
+      clearAllClientPreviewCache();
       shopify.toast.show(fetcher.data.message);
     } else if (fetcher.data?.error) {
       shopify.toast.show(fetcher.data.error, { isError: true });
