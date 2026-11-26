@@ -1,0 +1,68 @@
+{%- assign override_id = block.settings.override_preset_id | strip -%}
+{%- assign active_config = shop.metafields.lexor_mega_menu.active_config.value -%}
+{%- assign override_preset = nil -%}
+
+{%- if override_id != blank -%}
+  {%- assign all_presets = shop.metafields.lexor_mega_menu.presets.value -%}
+  {%- if all_presets != blank -%}
+    {%- for preset in all_presets -%}
+      {%- if preset.id == override_id -%}
+        {%- assign override_preset = preset -%}
+        {%- break -%}
+      {%- endif -%}
+    {%- endfor -%}
+  {%- endif -%}
+{%- endif -%}
+
+{%- if override_preset != blank or active_config != blank -%}
+  {{ 'lexor-mega-menu.css' | asset_url | stylesheet_tag }}
+
+  <script
+    id="lexor-mega-menu-config"
+    type="application/json"
+    data-mode="{% if override_preset != blank %}override{% else %}active{% endif %}"
+    data-desktop-selector="{{ block.settings.desktop_selector | escape }}"
+    data-drawer-selector="{{ block.settings.drawer_selector | escape }}"
+    data-customer-logged-in="{% if customer %}true{% else %}false{% endif %}"
+    data-account-url="{% if customer %}{{ routes.account_url }}{% else %}{{ routes.account_login_url }}{% endif %}"
+    data-customer-accounts-enabled="{% if shop.customer_accounts_enabled %}true{% else %}false{% endif %}"
+    data-files-base-url="{{ 'lexor-placeholder.png' | file_url | split: 'lexor-placeholder.png' | first }}"
+  >
+    {%- if override_preset != blank -%}
+      {{ override_preset | json }}
+    {%- else -%}
+      {{ active_config | json }}
+    {%- endif -%}
+  </script>
+
+  <script src="{{ 'lexor-mega-menu.js' | asset_url }}" defer></script>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Lexor Mega Menu",
+  "target": "body",
+  "settings": [
+    {
+      "type": "text",
+      "id": "override_preset_id",
+      "label": "Override Menu Preset ID (Theme-specific / Draft testing)",
+      "info": "Leave blank to use the live Published / Scheduled menu. Paste a Preset ID from the Lexor Mega Menu app to preview a specific (or Draft) menu ONLY on this theme."
+    },
+    {
+      "type": "text",
+      "id": "desktop_selector",
+      "label": "Desktop menu CSS selector",
+      "default": ".header__inline-menu",
+      "info": "Selector of the theme's desktop navigation element to replace."
+    },
+    {
+      "type": "text",
+      "id": "drawer_selector",
+      "label": "Mobile drawer CSS selector",
+      "default": "header-drawer",
+      "info": "Selector of the theme's mobile drawer element to replace."
+    }
+  ]
+}
+{% endschema %}
