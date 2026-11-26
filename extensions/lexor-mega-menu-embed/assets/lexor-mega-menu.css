@@ -368,7 +368,7 @@
 }
 
 .drawer-item-link .item-title {
-  font-family: "Gotham", inherit;
+  font-family: "Gotham", sans-serif;
   font-weight: 500;
   font-size: 15px;
   line-height: 100%;
