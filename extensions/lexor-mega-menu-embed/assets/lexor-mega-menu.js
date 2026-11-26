@@ -59,6 +59,15 @@
     return config.defaultMenu || null;
   }
 
+  function toHandle(str) {
+    return String(str || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  }
+
   function buildDesktopHtml(menu, filesBaseUrl) {
     var inherit = Boolean(menu.styleSettings && menu.styleSettings.inheritThemeCss);
     var tabs = (menu.items || []).filter(function (t) {
@@ -67,6 +76,7 @@
 
     var itemsHtml = tabs
       .map(function (tab, idx) {
+        var handle = toHandle(tab.title);
         var titleStyle = tab.highlightColor
           ? ' style="color:' + escapeHtml(tab.highlightColor) + ' !important"'
           : "";
@@ -74,7 +84,9 @@
 
         if (tab.type === "simple_link") {
           return (
-            '<li><a href="' +
+            '<li><a id="HeaderMenu-' +
+            escapeHtml(handle) +
+            '" href="' +
             escapeHtml(tab.url || "/") +
             '" class="header__menu-item list-menu__item link link--text focus-inset"' +
             titleStyle +
@@ -246,7 +258,9 @@
         return (
           '<li><div class="mega-menu" data-lmm-tab="' +
           idx +
-          '"><div class="header__menu-item list-menu__item link focus-inset"' +
+          '"><div id="HeaderMenu-' +
+          escapeHtml(handle) +
+          '" class="header__menu-item list-menu__item link focus-inset"' +
           titleStyle +
           "><span>" +
           escapeHtml(tab.title) +

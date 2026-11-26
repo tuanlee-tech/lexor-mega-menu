@@ -388,13 +388,11 @@ export async function importFromShopifyMenu(
       };
     }
 
-    const isPromo = /black\s*friday|sale|deal/i.test(top.title);
     return {
       id: uid("tab"),
       type: "simple_link",
       title: top.title,
       url: top.url || "#",
-      highlightColor: isPromo ? "#D93829" : undefined,
       visibility: "all",
       schedule: { enabled: false },
       badge: null,
